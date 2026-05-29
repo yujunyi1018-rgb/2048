@@ -88,7 +88,6 @@ function move(direction) {
     if (gameOver) return;
 
     const previous = grid.map(row => [...row]);
-    const prevScore = score;
 
     let rotated = false;
     let gridToSlide = grid.map(row => [...row]);
@@ -173,13 +172,21 @@ function updateMaxTile() {
 function saveBestScore() {
     if (score > bestScore) {
         bestScore = score;
-        localStorage.setItem('2048-best-score', bestScore.toString());
+        try {
+            localStorage.setItem('2048-best-score', bestScore.toString());
+        } catch (e) {
+            // localStorage unavailable — silently ignore
+        }
     }
 }
 
 function loadBestScore() {
-    const saved = localStorage.getItem('2048-best-score');
-    bestScore = saved ? parseInt(saved, 10) : 0;
+    try {
+        const saved = localStorage.getItem('2048-best-score');
+        bestScore = saved ? parseInt(saved, 10) : 0;
+    } catch (e) {
+        bestScore = 0;
+    }
 }
 
 function saveGame() {
