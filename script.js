@@ -50,29 +50,41 @@ function initGame() {
     hideGameOver();
 }
 
-// Slide a single row to the left and merge
+// Slide a single row to the left and merge, tracking merge positions
 function slideRow(row) {
     let tiles = row.filter(v => v !== 0);
-    let merged = [];
+    let result = [];
+    let merges = [];
     let i = 0;
 
     while (i < tiles.length) {
         if (i + 1 < tiles.length && tiles[i] === tiles[i + 1]) {
             const mergedValue = tiles[i] * 2;
-            merged.push(mergedValue);
+            result.push(mergedValue);
+            merges.push(result.length - 1);
             score += mergedValue;
             i += 2;
         } else {
-            merged.push(tiles[i]);
+            result.push(tiles[i]);
             i++;
         }
     }
 
-    while (merged.length < GRID_SIZE) {
-        merged.push(0);
+    while (result.length < GRID_SIZE) {
+        result.push(0);
     }
 
-    return merged;
+    return { row: result, merges };
+}
+
+// Map a merge position from transformed coordinates back to original grid
+function mapMergeToOriginal(mergePos, direction) {
+    const { r, c } = mergePos;
+    if (direction === 'left')  return { r, c };
+    if (direction === 'right') return { r, c: GRID_SIZE - 1 - c };
+    if (direction === 'up')    return { r: c, c: GRID_SIZE - 1 - r };
+    if (direction === 'down')  return { r: GRID_SIZE - 1 - c, c: r };
+    return mergePos;
 }
 
 function rowsEqual(a, b) {
@@ -93,24 +105,26 @@ function move(direction) {
     mergedPositions = [];
     newTilePos = null;
 
-    const previous = grid.map(row => [...row]);
-
-    let rotated = false;
     let gridToSlide = grid.map(row => [...row]);
 
     if (direction === 'up') {
         gridToSlide = rotateGrid(gridToSlide, 1);
-        rotated = true;
     } else if (direction === 'down') {
         gridToSlide = rotateGrid(gridToSlide, -1);
-        rotated = true;
     } else if (direction === 'right') {
         gridToSlide = gridToSlide.map(row => [...row].reverse());
-        rotated = true;
     }
     // left: no transformation needed
 
-    const newGrid = gridToSlide.map(row => slideRow(row));
+    // Slide each row and collect merge positions
+    const slideResults = gridToSlide.map(row => slideRow(row));
+    const newGrid = slideResults.map(sr => sr.row);
+    const allMerges = [];
+    slideResults.forEach((sr, rowIdx) => {
+        sr.merges.forEach(colIdx => {
+            allMerges.push({ r: rowIdx, c: colIdx });
+        });
+    });
 
     let result;
     if (direction === 'up') {
@@ -126,7 +140,7 @@ function move(direction) {
     if (gridsEqual(grid, result)) return;
 
     grid = result;
-    mergedPositions = findMergedTiles(previous, grid);
+    mergedPositions = allMerges.map(m => mapMergeToOriginal(m, direction));
     updateMaxTile();
     addRandomTile(grid);
     updateScoreboard();
@@ -174,21 +188,6 @@ function updateMaxTile() {
         }
     }
     maxTile = max;
-}
-
-// Find tiles that merged by comparing before/after states
-function findMergedTiles(before, after) {
-    const merged = [];
-    for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-            if (after[r][c] !== 0 && after[r][c] !== before[r][c]) {
-                if (before[r][c] === after[r][c] / 2) {
-                    merged.push({ r, c });
-                }
-            }
-        }
-    }
-    return merged;
 }
 
 function saveBestScore() {
