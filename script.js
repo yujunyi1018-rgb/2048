@@ -231,12 +231,14 @@ function render() {
         for (let c = 0; c < GRID_SIZE; c++) {
             const tile = document.createElement('div');
             tile.className = 'tile';
+            const inner = document.createElement('div');
+            inner.className = 'tile-inner';
             const value = grid[r][c];
             if (value !== 0) {
-                const tileClass = getTileClass(value);
-                tile.classList.add(tileClass);
-                tile.textContent = value;
+                tile.classList.add(getTileClass(value));
+                inner.textContent = value;
             }
+            tile.appendChild(inner);
             boardEl.appendChild(tile);
         }
     }
@@ -334,10 +336,6 @@ if (loadGame()) {
     } else {
         updateScoreboard();
         render();
-        if (isGameOver()) {
-            gameOver = true;
-            showGameOver();
-        }
     }
 } else {
     initGame();
