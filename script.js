@@ -6,6 +6,8 @@ let score = 0;
 let bestScore = 0;
 let maxTile = 0;
 let gameOver = false;
+let newTilePos = null;   // { r, c } of tile added after a move
+let mergedPositions = []; // [{ r, c }] of tiles that just merged
 
 // Initialize empty grid
 function createEmptyGrid() {
@@ -31,6 +33,7 @@ function addRandomTile(g) {
     if (empty.length === 0) return null;
     const { r, c } = empty[Math.floor(Math.random() * empty.length)];
     g[r][c] = Math.random() < 0.9 ? 2 : 4;
+    newTilePos = { r, c };
     return { r, c, value: g[r][c] };
 }
 
@@ -87,6 +90,9 @@ function gridsEqual(a, b) {
 function move(direction) {
     if (gameOver) return;
 
+    mergedPositions = [];
+    newTilePos = null;
+
     const previous = grid.map(row => [...row]);
 
     let rotated = false;
@@ -120,6 +126,7 @@ function move(direction) {
     if (gridsEqual(grid, result)) return;
 
     grid = result;
+    mergedPositions = findMergedTiles(previous, grid);
     updateMaxTile();
     addRandomTile(grid);
     updateScoreboard();
@@ -167,6 +174,21 @@ function updateMaxTile() {
         }
     }
     maxTile = max;
+}
+
+// Find tiles that merged by comparing before/after states
+function findMergedTiles(before, after) {
+    const merged = [];
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            if (after[r][c] !== 0 && after[r][c] !== before[r][c]) {
+                if (before[r][c] === after[r][c] / 2) {
+                    merged.push({ r, c });
+                }
+            }
+        }
+    }
+    return merged;
 }
 
 function saveBestScore() {
@@ -237,6 +259,14 @@ function render() {
             if (value !== 0) {
                 tile.classList.add(getTileClass(value));
                 inner.textContent = value;
+                // Animate new tiles
+                if (newTilePos && newTilePos.r === r && newTilePos.c === c) {
+                    tile.classList.add('tile-new');
+                }
+                // Animate merged tiles
+                if (mergedPositions.some(p => p.r === r && p.c === c)) {
+                    tile.classList.add('tile-merged');
+                }
             }
             tile.appendChild(inner);
             boardEl.appendChild(tile);
