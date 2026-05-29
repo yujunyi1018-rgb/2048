@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>2048</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1 class="title">2048</h1>
+        <div class="scoreboard">
+            <div class="score-box">
+                <span class="score-label">分数</span>
+                <span id="score" class="score-value">0</span>
+            </div>
+            <div class="score-box">
+                <span class="score-label">最高</span>
+                <span id="best-score" class="score-value">0</span>
+            </div>
+            <div class="score-box">
+                <span class="score-label">最大</span>
+                <span id="max-tile" class="score-value">0</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="new-game-btn" class="btn">🔄 新游戏</button>
+            <button id="undo-btn" class="btn">💬 撤销</button>
+        </div>
+        <div id="board" class="board">
+            <!-- tiles rendered by JS -->
+        </div>
+        <p class="hint">使用方向键 ← ↑ → ↓ 或滑动操作</p>
+    </div>
+    <div id="game-over-overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <h2>游戏结束</h2>
+            <p id="final-score">得分: 0</p>
+            <button id="restart-btn" class="btn">再来一局</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
