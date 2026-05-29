@@ -216,3 +216,129 @@ function loadGame() {
 function clearSavedGame() {
     localStorage.removeItem('2048-game-state');
 }
+
+const boardEl = document.getElementById('board');
+const scoreEl = document.getElementById('score');
+const bestScoreEl = document.getElementById('best-score');
+const maxTileEl = document.getElementById('max-tile');
+const gameOverOverlay = document.getElementById('game-over-overlay');
+const finalScoreEl = document.getElementById('final-score');
+
+// Render the grid to the DOM
+function render() {
+    boardEl.innerHTML = '';
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            const value = grid[r][c];
+            if (value !== 0) {
+                const tileClass = getTileClass(value);
+                tile.classList.add(tileClass);
+                tile.textContent = value;
+            }
+            boardEl.appendChild(tile);
+        }
+    }
+}
+
+function getTileClass(value) {
+    if (value <= 8192) return 'tile-' + value;
+    return 'tile-super';
+}
+
+function updateScoreboard() {
+    scoreEl.textContent = score;
+    if (score > bestScore) {
+        bestScore = score;
+        try {
+            localStorage.setItem('2048-best-score', bestScore.toString());
+        } catch (e) {}
+    }
+    bestScoreEl.textContent = bestScore;
+    maxTileEl.textContent = maxTile;
+    saveGame();
+}
+
+function showGameOver() {
+    gameOverOverlay.classList.remove('hidden');
+    finalScoreEl.textContent = '得分: ' + score;
+    saveBestScore();
+    clearSavedGame();
+}
+
+function hideGameOver() {
+    gameOverOverlay.classList.add('hidden');
+}
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+    const keyMap = {
+        'ArrowUp': 'up',
+        'ArrowDown': 'down',
+        'ArrowLeft': 'left',
+        'ArrowRight': 'right'
+    };
+    const direction = keyMap[e.key];
+    if (direction) {
+        e.preventDefault();
+        move(direction);
+    }
+});
+
+// Touch controls
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (Math.max(absDx, absDy) < 30) return;
+
+    if (absDx > absDy) {
+        move(dx > 0 ? 'right' : 'left');
+    } else {
+        move(dy > 0 ? 'down' : 'up');
+    }
+}, { passive: true });
+
+// Button handlers
+document.getElementById('new-game-btn').addEventListener('click', () => {
+    clearSavedGame();
+    initGame();
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+    clearSavedGame();
+    initGame();
+});
+
+document.getElementById('undo-btn').addEventListener('click', () => {
+    alert('生活还在继续，请继续向前走吧！！');
+});
+
+loadBestScore();
+
+if (loadGame()) {
+    if (isGameOver()) {
+        clearSavedGame();
+        initGame();
+    } else {
+        updateScoreboard();
+        render();
+        if (isGameOver()) {
+            gameOver = true;
+            showGameOver();
+        }
+    }
+} else {
+    initGame();
+}
